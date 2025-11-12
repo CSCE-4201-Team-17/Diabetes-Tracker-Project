@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// Login Screen (unchanged)
+// Login Screen
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -283,7 +283,7 @@ class Medication {
   });
 }
 
-// Enhanced Home Screen with Diabetes Tracking Features
+// Home Screen with Diabetes Tracking Features
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -299,7 +299,7 @@ class _HomeScreenState extends State<HomeScreen> {
     Medication(name: 'Insulin', dosage: '10 units', time: TimeOfDay(hour: 20, minute: 0)),
   ];
 
-  // Sample initial data
+  // Sample initial data 
   @override
   void initState() {
     super.initState();
