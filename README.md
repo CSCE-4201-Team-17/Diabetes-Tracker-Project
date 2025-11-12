@@ -3,6 +3,7 @@ A mobile app that helps people with Type 1/Type 2 diabetes (and pre-diabetes) ma
 
 The system uses a Flutter mobile interface connected to a Python backend. Meal photos are stored in AWS S3, which triggers AWS Lambda to run AI predictions. 
 Results are saved in DynamoDB, enabling real–time feedback and scalability for future deployment.
+
 --------------------------------------
 # How it works:
 
@@ -17,6 +18,7 @@ Results are saved in DynamoDB, enabling real–time feedback and scalability for
 -Results are stored in DynamoDB
 
 -Flutter app retrieves predictions and displays them to the user
+
 ---------------------------------------
 # Features:
 
@@ -31,6 +33,7 @@ Results are saved in DynamoDB, enabling real–time feedback and scalability for
 -Activity & Sleep Sync: pulls steps/sleep from phone/watch to improve suggestions.
 
 -AI Insights: Predict likely high/low blood sugar trends based on past logs.
+
 ----------------------------------------
 # Requirements:
 
