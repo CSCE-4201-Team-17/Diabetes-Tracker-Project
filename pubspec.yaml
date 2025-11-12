@@ -31,7 +31,14 @@ dependencies:
   flutter:
     sdk: flutter
   intl: ^0.18.1
-
+  #Below if new dependencies added for the project
+  http: ^1.1.0
+  charts_flutter: ^0.12.0
+  flutter_local_notifications: ^16.3.0
+  timezone: ^0.9.1
+  shared_preferences: ^2.2.2
+  image_picker: ^1.0.4
+  permission_handler: ^11.0.1
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
