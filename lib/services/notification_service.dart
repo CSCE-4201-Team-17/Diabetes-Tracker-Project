@@ -28,7 +28,7 @@ class NotificationService {
   }
   
   static Future<void> scheduleDailyReminders() async {
-    // Schedule morning glucose check
+    //Schedule morning glucose check
     await _scheduleDailyNotification(
       id: 0,
       title: 'Morning Glucose Check',
@@ -37,7 +37,7 @@ class NotificationService {
       minute: 0,
     );
     
-    // Schedule medication reminder
+    //Schedule medication reminder
     await _scheduleDailyNotification(
       id: 1,
       title: 'Medication Reminder',
@@ -46,7 +46,7 @@ class NotificationService {
       minute: 0,
     );
     
-    // Schedule evening check
+    //Schedule evening check
     await _scheduleDailyNotification(
       id: 2,
       title: 'Evening Glucose Check',

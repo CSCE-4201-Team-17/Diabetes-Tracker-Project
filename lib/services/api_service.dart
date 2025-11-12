@@ -24,7 +24,7 @@ class ApiService {
     return headers;
   }
   
-  // Authentication
+  //Authentication
   static Future<Map<String, dynamic>> login(String email, String password) async {
     try {
       final response = await http.post(
@@ -72,7 +72,7 @@ class ApiService {
     }
   }
   
-  // Glucose Readings
+  //Glucose Readings
   static Future<List<BloodSugarReading>> getGlucoseReadings(String userId) async {
     try {
       final response = await http.get(
@@ -106,7 +106,7 @@ class ApiService {
     }
   }
   
-  // Meal Analysis
+  //Meal Analysis
   static Future<Map<String, dynamic>> analyzeMeal(String imageUrl, String description) async {
     try {
       final response = await http.post(
@@ -127,7 +127,7 @@ class ApiService {
     }
   }
   
-  // Get weekly summary
+  //Get weekly summary
   static Future<Map<String, dynamic>> getWeeklySummary(String userId) async {
     try {
       final response = await http.get(
@@ -145,7 +145,7 @@ class ApiService {
     }
   }
 
-  // Get user profile
+  //Get user profile
   static Future<User?> getUserProfile(String userId) async {
     try {
       final response = await http.get(

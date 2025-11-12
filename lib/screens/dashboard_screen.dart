@@ -80,7 +80,7 @@ class DashboardScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Welcome Card
+          //Welcome Card
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -103,7 +103,7 @@ class DashboardScreen extends StatelessWidget {
           
           const SizedBox(height: 20),
           
-          // Quick Stats
+          //Quick Stats
           const Text(
             'Today\'s Overview',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -134,7 +134,7 @@ class DashboardScreen extends StatelessWidget {
           
           const SizedBox(height: 20),
           
-          // Quick Actions
+          //Quick Actions
           const Text(
             'Quick Actions',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -157,7 +157,7 @@ class DashboardScreen extends StatelessWidget {
           
           const SizedBox(height: 20),
           
-          // Recent Readings
+          //Recent Readings
           const Text(
             'Recent Readings',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),

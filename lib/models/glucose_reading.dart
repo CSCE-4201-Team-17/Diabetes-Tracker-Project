@@ -11,7 +11,7 @@ class BloodSugarReading {
     this.notes,
   });
 
-  //Add these methods for API integration
+  //Used for API integration
   factory BloodSugarReading.fromJson(Map<String, dynamic> json) {
     return BloodSugarReading(
       value: (json['value'] as num).toDouble(),

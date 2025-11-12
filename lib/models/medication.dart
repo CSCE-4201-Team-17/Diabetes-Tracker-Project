@@ -13,7 +13,7 @@ class Medication {
     this.taken = false,
   });
 
-  // Helper method to format time as string
+  //Helper method to format time as string
   String get timeString {
     final period = hour >= 12 ? 'PM' : 'AM';
     final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);

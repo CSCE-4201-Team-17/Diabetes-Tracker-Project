@@ -17,7 +17,7 @@ class GlucoseChart extends StatelessWidget {
       );
     }
 
-    // Sort readings by timestamp
+    //Sort readings by timestamp
     readings.sort((a, b) => a.timestamp.compareTo(b.timestamp));
     
     return Card(
@@ -93,7 +93,7 @@ class _GlucoseChartPainter extends CustomPainter {
     
     final points = _calculatePoints(size);
     
-    // Draw the line
+    //Draw the line
     final path = Path();
     path.moveTo(points.first.dx, points.first.dy);
     
@@ -103,7 +103,7 @@ class _GlucoseChartPainter extends CustomPainter {
     
     canvas.drawPath(path, paint);
     
-    // Draw points
+    //Draw points
     final pointPaint = Paint()
       ..color = Colors.blue
       ..style = PaintingStyle.fill;
@@ -112,7 +112,7 @@ class _GlucoseChartPainter extends CustomPainter {
       canvas.drawCircle(point, 3, pointPaint);
     }
     
-    // Draw target range
+    //Draw target range
     final targetPaint = Paint()
       ..color = Colors.green.withOpacity(0.2)
       ..style = PaintingStyle.fill;
@@ -129,7 +129,7 @@ class _GlucoseChartPainter extends CustomPainter {
     final minValue = values.reduce((a, b) => a < b ? a : b);
     final maxValue = values.reduce((a, b) => a > b ? a : b);
     
-    final range = (maxValue - minValue) * 1.1; // Add 10% padding
+    final range = (maxValue - minValue) * 1.1; //Add 10% padding
     final xStep = size.width / (readings.length - 1);
     
     return readings.asMap().entries.map((entry) {

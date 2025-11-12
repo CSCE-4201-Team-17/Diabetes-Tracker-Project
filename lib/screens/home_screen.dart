@@ -32,7 +32,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ]);
   }
 
-  // Dashboard Screen
+  //Dashboard Screen
   Widget _buildDashboard() {
     return DashboardScreen(
       bloodSugarReadings: _bloodSugarReadings,
@@ -44,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Medications Screen
+  //Medications Screen
   Widget _buildMedications() {
     return MedicationsScreen(
       medications: _medications,
@@ -64,7 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // History Screen
+  //History Screen
   Widget _buildHistory() {
     return HistoryScreen(
       bloodSugarReadings: _bloodSugarReadings,
@@ -72,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Settings Screen
+  //Settings Screen
   Widget _buildSettings() {
     return SettingsScreen(
       onLogout: () {
@@ -84,7 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Dialog Methods
+  //Dialog Methods
   void _showAddBloodSugarDialog() {
     final TextEditingController valueController = TextEditingController();
     String selectedType = 'Fasting';
