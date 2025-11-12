@@ -30,7 +30,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  intl: ^0.18.1
+  intl: 0.17.0
   #Below if new dependencies added for the project
   http: ^1.1.0
   charts_flutter: ^0.12.0
