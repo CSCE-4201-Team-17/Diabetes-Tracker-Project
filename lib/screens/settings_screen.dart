@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../services/storage_service.dart';
+import '../services/notification_service.dart';
 import '../widgets/settings_card.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -33,21 +35,45 @@ class SettingsScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        buildSettingsCard(
-          'Preferences',
-          Icons.settings,
-          [
-            SwitchListTile(
-              title: const Text('Enable Reminders'),
-              value: true,
-              onChanged: (value) {},
-            ),
-            SwitchListTile(
-              title: const Text('Dark Mode'),
-              value: false,
-              onChanged: (value) {},
-            ),
-          ],
+        Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Icon(Icons.settings),
+                    SizedBox(width: 8),
+                    Text(
+                      'Preferences',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+              SwitchListTile(
+                title: const Text('Enable Reminders'),
+                value: StorageService.enableReminders,
+                onChanged: (value) async {
+                  await StorageService.setEnableReminders(value);
+                  if (value) {
+                    await NotificationService.scheduleDailyReminders();
+                  } else {
+                    await NotificationService.cancelAllNotifications();
+                  }
+                },
+              ),
+              SwitchListTile(
+                title: const Text('Dark Mode'),
+                value: StorageService.darkMode,
+                onChanged: (value) async {
+                  await StorageService.setDarkMode(value);
+                  //Need to add theme switching logic here later
+                },
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 16),
         Card(

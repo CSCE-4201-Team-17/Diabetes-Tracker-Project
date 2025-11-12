@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../models/glucose_reading.dart';
 import '../models/user.dart';
 import '../models/meal_record.dart';
+import 'storage_service.dart';
 
 class ApiService {
   static const String baseUrl = 'http://your-backend-url:5000/api';
@@ -26,27 +27,30 @@ class ApiService {
   
   //Authentication
   static Future<Map<String, dynamic>> login(String email, String password) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/login'),
-        headers: await _getHeaders(),
-        body: json.encode({
-          'email': email,
-          'password': password,
-        }),
-      );
-      
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        _authToken = data['token'];
-        return {'success': true, 'user': data['user']};
-      } else {
-        return {'success': false, 'error': 'Invalid credentials'};
-      }
-    } catch (e) {
-      return {'success': false, 'error': 'Network error: $e'};
+  try {
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/login'), //Actual backend endpoint
+      headers: await _getHeaders(),
+      body: json.encode({
+        'email': email,
+        'password': password,
+      }),
+    );
+    
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      _authToken = data['token'];
+      //Store token for future requests
+      await StorageService.setAuthToken(data['token']);
+      await StorageService.setUserId(data['user']['id']);
+      return {'success': true, 'user': data['user']};
+    } else {
+      return {'success': false, 'error': 'Invalid credentials'};
     }
+  } catch (e) {
+    return {'success': false, 'error': 'Network error: $e'};
   }
+}
 
   static Future<Map<String, dynamic>> register(String email, String password, String name) async {
     try {
@@ -74,22 +78,22 @@ class ApiService {
   
   //Glucose Readings
   static Future<List<BloodSugarReading>> getGlucoseReadings(String userId) async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/users/$userId/glucose'),
-        headers: await _getHeaders(),
-      );
-      
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        return data.map((json) => BloodSugarReading.fromJson(json)).toList();
-      }
-      return [];
-    } catch (e) {
-      print('Error fetching glucose readings: $e');
-      return [];
+  try {
+    final response = await http.get(
+      Uri.parse('$baseUrl/users/$userId/glucose'),
+      headers: await _getHeaders(),
+    );
+    
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((json) => BloodSugarReading.fromJson(json)).toList();
     }
+    return [];
+  } catch (e) {
+    print('Error fetching glucose readings: $e');
+    return [];
   }
+}
   
   static Future<bool> addGlucoseReading(BloodSugarReading reading) async {
     try {
