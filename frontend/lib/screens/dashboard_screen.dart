@@ -7,6 +7,8 @@ import '../widgets/stat_card.dart';
 import '../widgets/reading_card.dart';
 import '../widgets/action_card.dart';
 import '../widgets/glucose_chart.dart';
+import '../screens/ai_assistant_screen.dart';
+
 
 class DashboardScreen extends StatefulWidget {
   final List<BloodSugarReading> bloodSugarReadings;
@@ -48,7 +50,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         // Load data from API
         final readings = await ApiService.getGlucoseReadings(userId);
         final summary = await ApiService.getWeeklySummary(userId);
-        
+
         setState(() {
           _readings = readings;
           _weeklySummary = summary;
@@ -86,10 +88,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   double _calculateTimeInRange() {
     if (_readings.isEmpty) return 0.0;
-    
-    final inRange = _readings.where((reading) => 
-      reading.value >= 70 && reading.value <= 140).length;
-    
+
+    final inRange = _readings.where(
+      (reading) => reading.value >= 70 && reading.value <= 140,
+    ).length;
+
     return (inRange / _readings.length) * 100;
   }
 
@@ -99,10 +102,67 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return total / _readings.length;
   }
 
+  // 🔍 Insight based on recent readings
+  String _getAiInsight() {
+    if (_readings.length < 3) {
+      return 'Add a few more readings to analyze your trends.';
+    }
+
+    // Sort readings by time (oldest to newest)
+    final sorted = [..._readings]
+      ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+
+    // Only look at the last 7 days
+    final oneWeekAgo = DateTime.now().subtract(const Duration(days: 7));
+    final lastWeek = sorted.where((r) => r.timestamp.isAfter(oneWeekAgo)).toList();
+
+    if (lastWeek.isEmpty) {
+      return 'No readings in the last week. Try logging regularly to give better insights.';
+    }
+
+    double avg(List<BloodSugarReading> list) =>
+        list.map((r) => r.value).reduce((a, b) => a + b) / list.length;
+
+    final recentAvg = avg(lastWeek);
+
+    // Split week into early vs late to detect simple trend
+    final half = (lastWeek.length / 2).floor();
+    if (half == 0) {
+      return 'Please keep logging readings, in order to get a appropriate reading.';
+    }
+
+    final earlyAvg = avg(lastWeek.sublist(0, half));
+    final lateAvg = avg(lastWeek.sublist(half));
+    final diff = lateAvg - earlyAvg;
+
+    String trend;
+    if (diff > 10) {
+      trend = 'rising';
+    } else if (diff < -10) {
+      trend = 'falling';
+    } else {
+      trend = 'fairly stable';
+    }
+
+    String control;
+    if (recentAvg < 80) {
+      control = 'on the low side';
+    } else if (recentAvg <= 140) {
+      control = 'in a generally healthy range';
+    } else {
+      control = 'higher than recommended';
+    }
+
+    return 'Based on your last week of readings, your average is '
+        '${recentAvg.toStringAsFixed(0)} mg/dL and your levels look $trend over time. ';
+        
+  }
+
   Widget _buildStatsGrid() {
     final latestReading = _readings.isNotEmpty ? _readings.first : null;
-    final todayReadings = _readings.where((reading) => 
-      reading.timestamp.day == DateTime.now().day).toList();
+    final todayReadings = _readings
+        .where((reading) => reading.timestamp.day == DateTime.now().day)
+        .toList();
 
     return GridView.count(
       shrinkWrap: true,
@@ -115,7 +175,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           'Current Glucose',
           latestReading?.value.toStringAsFixed(0) ?? '--',
           'mg/dL',
-          latestReading != null ? _getBloodSugarColor(latestReading.value) : Colors.grey,
+          latestReading != null
+              ? _getBloodSugarColor(latestReading.value)
+              : Colors.grey,
         ),
         buildStatCard(
           'Time in Range',
@@ -125,7 +187,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         buildStatCard(
           'Average',
-          '${_calculateAverageGlucose().toStringAsFixed(0)}',
+          _calculateAverageGlucose().toStringAsFixed(0),
           'mg/dL',
           Colors.blue,
         ),
@@ -151,6 +213,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       onRefresh: _loadData,
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
+        physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -163,7 +226,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: [
                     Text(
                       'Good ${_getGreeting()}!',
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     const Text(
@@ -174,9 +240,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 20),
-            
+
             // Quick Stats
             const Text(
               'Today\'s Overview',
@@ -184,25 +250,55 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             const SizedBox(height: 12),
             _buildStatsGrid(),
-            
+
             const SizedBox(height: 20),
-            
-            // Glucose Chart
+
+            // Glucose Chart + Insight
             if (_readings.isNotEmpty)
               Column(
                 children: [
                   SimpleGlucoseChart(readings: _readings),
                   const SizedBox(height: 20),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Row(
+                            children: [
+                              Icon(Icons.analytics, color: Colors.teal),
+                              SizedBox(width: 8),
+                              Text(
+                                'Trend Insight',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _getAiInsight(),
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
-            
+
+            const SizedBox(height: 20),
+
             // Quick Actions
             const Text(
               'Quick Actions',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            
+
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -210,22 +306,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
               children: [
-                buildActionCard('Log Blood Sugar', Icons.monitor_heart, Colors.red, widget.onAddBloodSugar),
-                buildActionCard('Medications', Icons.medication, Colors.green, widget.onNavigateToMedications),
-                buildActionCard('History', Icons.history, Colors.orange, widget.onNavigateToHistory),
-                buildActionCard('Settings', Icons.settings, Colors.purple, widget.onNavigateToSettings),
+                buildActionCard(
+                  'Log Blood Sugar',
+                  Icons.monitor_heart,
+                  Colors.red,
+                  widget.onAddBloodSugar,
+                ),
+                buildActionCard(
+                  'Medications',
+                  Icons.medication,
+                  Colors.green,
+                  widget.onNavigateToMedications,
+                ),
+                buildActionCard(
+                  'History',
+                  Icons.history,
+                  Colors.orange,
+                  widget.onNavigateToHistory,
+                ),
+                buildActionCard(
+                  'Settings',
+                  Icons.settings,
+                  Colors.purple,
+                  widget.onNavigateToSettings,
+                ),
               ],
             ),
-            
+
+
             const SizedBox(height: 20),
-            
+
             // Recent Readings
             const Text(
               'Recent Readings',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            
+
             if (_readings.isEmpty)
               const Card(
                 child: Padding(
@@ -234,11 +351,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               )
             else
-              ..._readings.take(3).map((reading) => 
-                buildReadingCard(reading)
-              ).toList(),
+              ..._readings
+                  .take(3)
+                  .map((reading) => buildReadingCard(reading))
+                  .toList(),
 
-            // AI Insights
+            // Weekly AI Insights from backend (if available)
             if (_weeklySummary['insights'] != null)
               Column(
                 children: [
@@ -263,7 +381,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ],
                           ),
                           const SizedBox(height: 8),
-                          Text(_weeklySummary['insights'] ?? 'No insights available yet.'),
+                          Text(
+                            _weeklySummary['insights'] ??
+                                'No insights available yet.',
+                          ),
                         ],
                       ),
                     ),
