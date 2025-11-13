@@ -4,9 +4,10 @@ import '../models/glucose_reading.dart';
 import '../models/user.dart';
 import '../models/meal_record.dart';
 import 'storage_service.dart';
+import '../models/medication.dart'; 
 
 class ApiService {
-  static const String baseUrl = 'http://your-backend-url:5000/api';
+  static const String baseUrl = 'http://127.0.0.1:5001/api';
   static String? _authToken;
   
   static void setAuthToken(String token) {
@@ -95,20 +96,20 @@ class ApiService {
   }
 }
   
-  static Future<bool> addGlucoseReading(BloodSugarReading reading) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/glucose'),
-        headers: await _getHeaders(),
-        body: json.encode(reading.toJson()),
-      );
+  // static Future<bool> addGlucoseReading(BloodSugarReading reading) async {
+  //   try {
+  //     final response = await http.post(
+  //       Uri.parse('$baseUrl/glucose'),
+  //       headers: await _getHeaders(),
+  //       body: json.encode(reading.toJson()),
+  //     );
       
-      return response.statusCode == 201;
-    } catch (e) {
-      print('Error adding glucose reading: $e');
-      return false;
-    }
-  }
+  //     return response.statusCode == 201;
+  //   } catch (e) {
+  //     print('Error adding glucose reading: $e');
+  //     return false;
+  //   }
+  // }
   
   //Meal Analysis
   static Future<Map<String, dynamic>> analyzeMeal(String imageUrl, String description) async {
@@ -167,4 +168,67 @@ class ApiService {
       return null;
     }
   }
+  static Future<bool> addGlucoseReading(BloodSugarReading reading) async {
+  final userId = StorageService.userId;
+
+  final body = reading.toJson();
+  body['userId'] = userId;
+
+  final response = await http.post(
+    Uri.parse('$baseUrl/glucose'),
+    headers: await _getHeaders(),
+    body: json.encode(body),
+  );
+
+  return response.statusCode == 201;
+}
+static Future<String> sendChatMessage(
+  String message, {
+  required List<BloodSugarReading> readings,
+  required List<Medication> medications,
+}) async {
+  final userId = StorageService.userId;
+
+  // Convert readings to JSON manually
+  final readingsJson = readings.map((r) {
+    return {
+      'value': r.value,
+      'timestamp': r.timestamp.toIso8601String(),
+      'type': r.type,
+    };
+  }).toList();
+
+  // Convert medications to JSON manually (no toJson() needed)
+  final medsJson = medications.map((m) {
+    return {
+      'name': m.name,
+      'dosage': m.dosage,
+      'hour': m.hour,
+      'minute': m.minute,
+      // if your Medication doesn't have 'taken', you can remove this line
+      'taken': m.taken,
+    };
+  }).toList();
+
+  final response = await http.post(
+    Uri.parse('$baseUrl/ai/chat'),
+    headers: await _getHeaders(),
+    body: json.encode({
+      'userId': userId,
+      'message': message,
+      'readings': readingsJson,
+      'medications': medsJson,
+    }),
+  );
+
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body);
+    return data['reply'];
+  } else {
+    throw Exception("AI assistant failed");
+  }
+}
+
+
+
 }

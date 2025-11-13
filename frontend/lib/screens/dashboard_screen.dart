@@ -7,6 +7,8 @@ import '../widgets/stat_card.dart';
 import '../widgets/reading_card.dart';
 import '../widgets/action_card.dart';
 import '../widgets/glucose_chart.dart';
+import '../screens/ai_assistant_screen.dart';
+
 
 class DashboardScreen extends StatefulWidget {
   final List<BloodSugarReading> bloodSugarReadings;
@@ -330,6 +332,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ],
             ),
+
 
             const SizedBox(height: 20),
 

@@ -6,6 +6,8 @@ import 'dashboard_screen.dart';
 import 'medications_screen.dart';
 import 'history_screen.dart';
 import 'settings_screen.dart';
+import 'ai_assistant_screen.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -38,11 +40,20 @@ class _HomeScreenState extends State<HomeScreen> {
       bloodSugarReadings: _bloodSugarReadings,
       medications: _medications,
       onAddBloodSugar: _showAddBloodSugarDialog,
-      onNavigateToMedications: () => setState(() => _currentIndex = 1),
-      onNavigateToHistory: () => setState(() => _currentIndex = 2),
-      onNavigateToSettings: () => setState(() => _currentIndex = 3),
+      onNavigateToMedications: () => setState(() => _currentIndex = 3),
+      onNavigateToHistory: () => setState(() => _currentIndex = 1),
+      onNavigateToSettings: () => setState(() => _currentIndex = 4),
     );
   }
+
+  // AI Assistant Screen (center tab)
+  Widget _buildAiAssistant() {
+  return AiAssistantScreen(
+    bloodSugarReadings: _bloodSugarReadings,
+    medications: _medications,
+  );
+}
+
 
   //Medications Screen
   Widget _buildMedications() {
@@ -173,6 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           _buildDashboard(),
           _buildMedications(),
+          _buildAiAssistant(),
           _buildHistory(),
           _buildSettings(),
         ],
@@ -184,6 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Dashboard'),
           BottomNavigationBarItem(icon: Icon(Icons.medication), label: 'Medications'),
+          BottomNavigationBarItem(icon: Icon(Icons.smart_toy), label: 'AI Coach',),
           BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
           BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
         ],
