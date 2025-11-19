@@ -1,10 +1,11 @@
-
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
 from groq import Groq
 import os
-
+import boto3
+import uuid
+from werkzeug.utils import secure_filename
 load_dotenv()
 
 app = Flask(__name__)
@@ -16,6 +17,17 @@ readings = {}
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 client = Groq(api_key=GROQ_API_KEY)
+
+#initialize aws S3 client
+s3 = boto3.client(
+    "s3",
+    aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+    aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+    region_name=os.getenv("AWS_REGION"),
+)
+
+BUCKET_NAME = os.getenv("S3_BUCKET")
+
 
 @app.post("/api/glucose")
 def add_glucose():
