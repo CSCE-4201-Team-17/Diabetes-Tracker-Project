@@ -7,6 +7,8 @@ import boto3
 import uuid
 from werkzeug.utils import secure_filename
 load_dotenv()
+import time
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 CORS(app)
@@ -16,7 +18,10 @@ CORS(app)
 readings = {}
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-client = Groq(api_key=GROQ_API_KEY)
+client = Groq(api_key=GROQ_API_KEY) 
+ 
+S3_BUCKET= os.getenv("S3_BUCKET")
+AWS_REGION = os.getenv("AWS_REGION")
 
 #initialize aws S3 client
 s3 = boto3.client(
@@ -26,7 +31,6 @@ s3 = boto3.client(
     region_name=os.getenv("AWS_REGION"),
 )
 
-BUCKET_NAME = os.getenv("S3_BUCKET")
 
 
 @app.post("/api/glucose")
@@ -52,6 +56,38 @@ def add_glucose():
     return jsonify({"success": True}), 201
 
 
+
+
+@app.post("/api/upload")
+def upload_file():
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}),400
+    
+    file = request.files['file']
+
+    if file.filename == "":
+        return jsonify({"error": "No selected file"}), 400
+    
+    #generate a unique filename 
+    filename = f"{uuid.uuid4().hex}_{secure_filename(file.filename)}"
+
+    try:
+        s3.upload_fileobj(
+            file,
+            BUCKET_NAME,
+            filename,
+            ExtraArgs={"ContentType": file.content_type}
+        )
+
+        file_url = f"https://{BUCKET_NAME}.s3.{os.getenv('AWS_REGION')}.amazonaws.com/{filename}"
+
+        return jsonify( {
+            "message":"File uploaded successfully",
+            "url": file_url
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 # Get user readings
 @app.get("/api/users/<user_id>/glucose")
 def get_user_glucose(user_id):
@@ -62,6 +98,7 @@ def get_user_glucose(user_id):
 # AI Chat Assistant
 @app.post("/api/ai/chat")
 def ai_chat():
+    global client
     print("AI endpoint HIT")
     data = request.json
     user_id = data.get("userId")
@@ -143,6 +180,36 @@ User question:
     except Exception as e:
         print("Groq API error:", e)
         return jsonify({"error": "AI service unavailable"}), 500
+    
+@app.route("/api/upload_meal", methods=["POST"])
+def upload_meal():
+    if "image" not in request.files:
+        return jsonify({"error": "No image uploaded"}), 400
+
+    image = request.files["image"]
+
+    # Make a unique file name for S3
+    filename = f"meal_{int(time.time())}.jpg"
+
+    try:
+        s3.upload_fileobj(
+            image,
+            S3_BUCKET,
+            filename,
+            ExtraArgs={"ContentType": image.content_type}
+        )
+
+        # Build the public image URL
+        s3.upload_fileobj(image, S3_BUCKET, filename)
+        image_url = f"https://{S3_BUCKET}.s3.{AWS_REGION}.amazonaws.com/{filename}"
+
+        return jsonify({"image_url": image_url}), 200
+
+    except Exception as e:
+        print("S3 Upload Error:", e)
+        return jsonify({"error": "S3 upload failed"}), 500
+ 
+
 
 if __name__ == "__main__":
     # NOTE: port 6000 to match what you're already running
