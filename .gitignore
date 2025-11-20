@@ -1,1 +1,61 @@
-backend/.env
+###############################
+# macOS SYSTEM FILES
+###############################
+.DS_Store
+.AppleDouble
+.LSOverride
+
+###############################
+# IDE / PROJECT SETTINGS
+###############################
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+###############################
+# ENVIRONMENT FILES
+###############################
+.env
+*.env
+.venv/
+backend/.venv/
+backend/__pycache__/
+backend/*.pyc
+
+###############################
+# FLUTTER / DART BUILD FILES
+###############################
+frontend/.dart_tool/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/.packages
+frontend/.pub-cache/
+frontend/build/
+frontend/pubspec.lock
+
+###############################
+# iOS / macOS generated files
+###############################
+frontend/ios/Pods/
+frontend/ios/Flutter/
+frontend/ios/.symlinks/
+frontend/macos/Pods/
+frontend/macos/Flutter/
+frontend/macos/.symlinks/
+
+###############################
+# Android generated
+###############################
+frontend/android/.gradle/
+frontend/android/app/build/
+
+###############################
+# LOG FILES
+###############################
+*.log
+
+###############################
+# OTHER
+###############################
+node_modules/

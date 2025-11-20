@@ -29,6 +29,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
     });
 
     try {
+      // SEND READINGS + MEDICATIONS TO BACKEND
       final reply = await ApiService.sendChatMessage(
         message,
         readings: widget.bloodSugarReadings,
