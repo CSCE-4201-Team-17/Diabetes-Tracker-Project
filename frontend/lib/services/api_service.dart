@@ -5,6 +5,8 @@ import '../models/user.dart';
 import '../models/meal_record.dart';
 import 'storage_service.dart';
 import '../models/medication.dart'; 
+import '../widgets/glucose_chart.dart';
+
 
 class ApiService {
   static const String baseUrl = 'http://127.0.0.1:5001/api';
@@ -226,6 +228,31 @@ static Future<String> sendChatMessage(
     return data['reply'];
   } else {
     throw Exception("AI assistant failed");
+  }
+}
+static Future<Map<String, dynamic>> predictGlucose(
+  List<BloodSugarReading> readings, {
+  int hoursAhead = 2,
+}) async {
+  final body = {
+    'hoursAhead': hoursAhead,
+    'readings': readings.map((r) => {
+      'value': r.value,
+      'timestamp': r.timestamp.toIso8601String(),
+      'type': r.type,
+    }).toList(),
+  };
+
+  final response = await http.post(
+    Uri.parse('$baseUrl/glucose/predict'),
+    headers: await _getHeaders(),
+    body: json.encode(body),
+  );
+
+  if (response.statusCode == 200) {
+    return json.decode(response.body);
+  } else {
+    throw Exception("Prediction failed");
   }
 }
 
