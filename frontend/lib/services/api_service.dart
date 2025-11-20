@@ -1,14 +1,13 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import '../models/glucose_reading.dart';
 import '../models/user.dart';
 import '../models/meal_record.dart';
 import 'storage_service.dart';
 import '../models/medication.dart'; 
 import '../widgets/glucose_chart.dart';
-import 'dart:io';
-import 'package:image_picker/image_picker.dart';
-
 
 class ApiService {
   static const String baseUrl = 'http://127.0.0.1:5001/api';
@@ -243,22 +242,30 @@ class ApiService {
       return null;
     }
   }
-  
+
   //Meal Upload Methods
   static Future<Map<String, dynamic>> uploadMealImage(File imageFile) async {
     try {
+      final userId = StorageService.userId;
+      if (userId == null) {
+        throw Exception('User ID not found');
+      }
+
       var request = http.MultipartRequest(
         'POST',
         Uri.parse('$baseUrl/upload_meal'),
       );
 
-      //Add image file
+      //Adds image file
       request.files.add(await http.MultipartFile.fromPath(
         'image',
         imageFile.path,
       ));
 
-      //Add headers if needed
+      //Adds userId as form data
+      request.fields['userId'] = userId;
+
+      //Adds headers if needed
       if (_authToken != null) {
         request.headers['Authorization'] = 'Bearer $_authToken';
       }
@@ -278,6 +285,7 @@ class ApiService {
 
   static Future<bool> saveMealRecord(MealRecord mealRecord) async {
     try {
+      //Note: I might need to change this endpoint since it might not exist yet in our backend, but keeping it for future use
       final response = await http.post(
         Uri.parse('$baseUrl/meals'),
         headers: await _getHeaders(),
@@ -293,6 +301,7 @@ class ApiService {
 
   static Future<List<MealRecord>> getUserMeals(String userId) async {
     try {
+      //Note: I might need to change this endpoint since it might not exist yet in our backend, but keeping it for future use
       final response = await http.get(
         Uri.parse('$baseUrl/users/$userId/meals'),
         headers: await _getHeaders(),
@@ -309,6 +318,3 @@ class ApiService {
     }
   }
 }
-
-
-
