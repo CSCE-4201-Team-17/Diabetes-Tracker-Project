@@ -74,3 +74,7 @@ Results are saved in DynamoDB, enabling real–time feedback and scalability for
 2. go to device manager and add a device.
 3. This will create your own virtual mobile emulator.
 4. Start the emulator, and it is ready to go. This will appear in your terminal when typing 'flutter devices'.
+<<<<<<< HEAD
+=======
+
+>>>>>>> 81b217da722ed9dfb19d09bb1486ab39595b6977
