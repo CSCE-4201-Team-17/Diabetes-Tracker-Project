@@ -6,6 +6,8 @@ import '../models/meal_record.dart';
 import 'storage_service.dart';
 import '../models/medication.dart'; 
 import '../widgets/glucose_chart.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 
 class ApiService {
@@ -30,30 +32,29 @@ class ApiService {
   
   //Authentication
   static Future<Map<String, dynamic>> login(String email, String password) async {
-  try {
-    final response = await http.post(
-      Uri.parse('$baseUrl/auth/login'), //Actual backend endpoint
-      headers: await _getHeaders(),
-      body: json.encode({
-        'email': email,
-        'password': password,
-      }),
-    );
-    
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      _authToken = data['token'];
-      //Store token for future requests
-      await StorageService.setAuthToken(data['token']);
-      await StorageService.setUserId(data['user']['id']);
-      return {'success': true, 'user': data['user']};
-    } else {
-      return {'success': false, 'error': 'Invalid credentials'};
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/login'),
+        headers: await _getHeaders(),
+        body: json.encode({
+          'email': email,
+          'password': password,
+        }),
+      );
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        _authToken = data['token'];
+        await StorageService.setAuthToken(data['token']);
+        await StorageService.setUserId(data['user']['id']);
+        return {'success': true, 'user': data['user']};
+      } else {
+        return {'success': false, 'error': 'Invalid credentials'};
+      }
+    } catch (e) {
+      return {'success': false, 'error': 'Network error: $e'};
     }
-  } catch (e) {
-    return {'success': false, 'error': 'Network error: $e'};
   }
-}
 
   static Future<Map<String, dynamic>> register(String email, String password, String name) async {
     try {
@@ -81,38 +82,110 @@ class ApiService {
   
   //Glucose Readings
   static Future<List<BloodSugarReading>> getGlucoseReadings(String userId) async {
-  try {
-    final response = await http.get(
-      Uri.parse('$baseUrl/users/$userId/glucose'),
-      headers: await _getHeaders(),
-    );
-    
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      return data.map((json) => BloodSugarReading.fromJson(json)).toList();
-    }
-    return [];
-  } catch (e) {
-    print('Error fetching glucose readings: $e');
-    return [];
-  }
-}
-  
-  // static Future<bool> addGlucoseReading(BloodSugarReading reading) async {
-  //   try {
-  //     final response = await http.post(
-  //       Uri.parse('$baseUrl/glucose'),
-  //       headers: await _getHeaders(),
-  //       body: json.encode(reading.toJson()),
-  //     );
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/users/$userId/glucose'),
+        headers: await _getHeaders(),
+      );
       
-  //     return response.statusCode == 201;
-  //   } catch (e) {
-  //     print('Error adding glucose reading: $e');
-  //     return false;
-  //   }
-  // }
-  
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((json) => BloodSugarReading.fromJson(json)).toList();
+      }
+      return [];
+    } catch (e) {
+      print('Error fetching glucose readings: $e');
+      return [];
+    }
+  }
+
+  static Future<bool> addGlucoseReading(BloodSugarReading reading) async {
+    final userId = StorageService.userId;
+
+    final body = reading.toJson();
+    body['userId'] = userId;
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/glucose'),
+      headers: await _getHeaders(),
+      body: json.encode(body),
+    );
+
+    return response.statusCode == 201;
+  }
+
+  //AI Chat
+  static Future<String> sendChatMessage(
+    String message, {
+    required List<BloodSugarReading> readings,
+    required List<Medication> medications,
+  }) async {
+    final userId = StorageService.userId;
+
+    final readingsJson = readings.map((r) {
+      return {
+        'value': r.value,
+        'timestamp': r.timestamp.toIso8601String(),
+        'type': r.type,
+      };
+    }).toList();
+
+    final medsJson = medications.map((m) {
+      return {
+        'name': m.name,
+        'dosage': m.dosage,
+        'hour': m.hour,
+        'minute': m.minute,
+        'taken': m.taken,
+      };
+    }).toList();
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/ai/chat'),
+      headers: await _getHeaders(),
+      body: json.encode({
+        'userId': userId,
+        'message': message,
+        'readings': readingsJson,
+        'medications': medsJson,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return data['reply'];
+    } else {
+      throw Exception("AI assistant failed");
+    }
+  }
+
+  //Glucose Prediction
+  static Future<Map<String, dynamic>> predictGlucose(
+    List<BloodSugarReading> readings, {
+    int hoursAhead = 2,
+  }) async {
+    final body = {
+      'hoursAhead': hoursAhead,
+      'readings': readings.map((r) => {
+        'value': r.value,
+        'timestamp': r.timestamp.toIso8601String(),
+        'type': r.type,
+      }).toList(),
+    };
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/glucose/predict'),
+      headers: await _getHeaders(),
+      body: json.encode(body),
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception("Prediction failed");
+    }
+  }
+
   //Meal Analysis
   static Future<Map<String, dynamic>> analyzeMeal(String imageUrl, String description) async {
     try {
@@ -170,92 +243,72 @@ class ApiService {
       return null;
     }
   }
-  static Future<bool> addGlucoseReading(BloodSugarReading reading) async {
-  final userId = StorageService.userId;
+  
+  //Meal Upload Methods
+  static Future<Map<String, dynamic>> uploadMealImage(File imageFile) async {
+    try {
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/upload_meal'),
+      );
 
-  final body = reading.toJson();
-  body['userId'] = userId;
+      //Add image file
+      request.files.add(await http.MultipartFile.fromPath(
+        'image',
+        imageFile.path,
+      ));
 
-  final response = await http.post(
-    Uri.parse('$baseUrl/glucose'),
-    headers: await _getHeaders(),
-    body: json.encode(body),
-  );
+      //Add headers if needed
+      if (_authToken != null) {
+        request.headers['Authorization'] = 'Bearer $_authToken';
+      }
 
-  return response.statusCode == 201;
-}
-static Future<String> sendChatMessage(
-  String message, {
-  required List<BloodSugarReading> readings,
-  required List<Medication> medications,
-}) async {
-  final userId = StorageService.userId;
+      var response = await request.send();
+      var responseData = await response.stream.bytesToString();
 
-  // Convert readings to JSON manually
-  final readingsJson = readings.map((r) {
-    return {
-      'value': r.value,
-      'timestamp': r.timestamp.toIso8601String(),
-      'type': r.type,
-    };
-  }).toList();
-
-  // Convert medications to JSON manually (no toJson() needed)
-  final medsJson = medications.map((m) {
-    return {
-      'name': m.name,
-      'dosage': m.dosage,
-      'hour': m.hour,
-      'minute': m.minute,
-      // if your Medication doesn't have 'taken', you can remove this line
-      'taken': m.taken,
-    };
-  }).toList();
-
-  final response = await http.post(
-    Uri.parse('$baseUrl/ai/chat'),
-    headers: await _getHeaders(),
-    body: json.encode({
-      'userId': userId,
-      'message': message,
-      'readings': readingsJson,
-      'medications': medsJson,
-    }),
-  );
-
-  if (response.statusCode == 200) {
-    final data = json.decode(response.body);
-    return data['reply'];
-  } else {
-    throw Exception("AI assistant failed");
+      if (response.statusCode == 200) {
+        return json.decode(responseData);
+      } else {
+        throw Exception('Failed to upload image: ${json.decode(responseData)['error']}');
+      }
+    } catch (e) {
+      throw Exception('Upload failed: $e');
+    }
   }
-}
-static Future<Map<String, dynamic>> predictGlucose(
-  List<BloodSugarReading> readings, {
-  int hoursAhead = 2,
-}) async {
-  final body = {
-    'hoursAhead': hoursAhead,
-    'readings': readings.map((r) => {
-      'value': r.value,
-      'timestamp': r.timestamp.toIso8601String(),
-      'type': r.type,
-    }).toList(),
-  };
 
-  final response = await http.post(
-    Uri.parse('$baseUrl/glucose/predict'),
-    headers: await _getHeaders(),
-    body: json.encode(body),
-  );
+  static Future<bool> saveMealRecord(MealRecord mealRecord) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/meals'),
+        headers: await _getHeaders(),
+        body: json.encode(mealRecord.toJson()),
+      );
 
-  if (response.statusCode == 200) {
-    return json.decode(response.body);
-  } else {
-    throw Exception("Prediction failed");
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (e) {
+      print('Error saving meal record: $e');
+      return false;
+    }
+  }
+
+  static Future<List<MealRecord>> getUserMeals(String userId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/users/$userId/meals'),
+        headers: await _getHeaders(),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((json) => MealRecord.fromJson(json)).toList();
+      }
+      return [];
+    } catch (e) {
+      print('Error fetching meals: $e');
+      return [];
+    }
   }
 }
 
 
 
-}

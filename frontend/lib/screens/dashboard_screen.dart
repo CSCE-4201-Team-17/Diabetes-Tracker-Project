@@ -47,7 +47,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     try {
       final userId = StorageService.userId;
       if (userId != null) {
-        // Load data from API
+        //Load data from API
         final readings = await ApiService.getGlucoseReadings(userId);
         final summary = await ApiService.getWeeklySummary(userId);
 
@@ -57,14 +57,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _isLoading = false;
         });
       } else {
-        // Fallback to local data if no user ID
+        //Fallback to local data if no user ID
         setState(() {
           _readings = widget.bloodSugarReadings;
           _isLoading = false;
         });
       }
     } catch (e) {
-      // Fallback to local data on error
+      //Fallback to local data on error
       setState(() {
         _readings = widget.bloodSugarReadings;
         _isLoading = false;
