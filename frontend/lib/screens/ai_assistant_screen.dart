@@ -142,7 +142,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       ),
       body: Column(
         children: [
-          // ========= CHAT (text + chart) =========
+          //  CHAT (text + chart) 
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
@@ -201,7 +201,6 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
 
                             const SizedBox(height: 4),
 
-                            // ---- LITTLE COLOR SQUARES LEGEND (MATCHES GRAPH) ----
                             Wrap(
                               spacing: 12,
                               runSpacing: 4,
@@ -289,7 +288,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
             ),
           ),
 
-          // ========= INPUT + SMALL GREEN TREND BUTTON =========
+          //  INPUT + SMALL GREEN TREND BUTTON 
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(

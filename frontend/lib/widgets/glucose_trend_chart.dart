@@ -416,7 +416,7 @@ class _GlucoseTrendPainter extends CustomPainter {
       );
     }
 
-    // ========= LEGEND (ONE ROW: readings | trend | 3-week forecast) =========
+    //   readings | trend | 3-week forecast
     final legendBgPaint = Paint()
       ..color = Colors.white.withOpacity(0.9)
       ..style = PaintingStyle.fill;
