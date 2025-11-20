@@ -51,6 +51,7 @@ Results are saved in DynamoDB, enabling real–time feedback and scalability for
 -The system must generate a simple AI weekly/monthly summary.
 
 -The system must show the predicted blood sugar levels trends and a correlation to meals and medications the user consumes.
+
 -------------------------------------
 # How to Run:
 
