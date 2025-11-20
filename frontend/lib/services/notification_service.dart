@@ -28,32 +28,43 @@ class NotificationService {
   }
   
   static Future<void> scheduleDailyReminders() async {
-    //Schedule morning glucose check
-    await _scheduleDailyNotification(
-      id: 0,
-      title: 'Morning Glucose Check',
-      body: 'Time to check your fasting blood sugar',
-      hour: 8,
-      minute: 0,
-    );
+    try {
+      //Check permissions first
+      final hasPermission = await _checkNotificationPermissions();
+      if (!hasPermission) {
+        print('Notification permissions not granted');
+        return;
+      }
+
+      //Schedule morning glucose check
+      await _scheduleDailyNotification(
+        id: 0,
+        title: 'Time to check your glucose!',
+        body: 'Remember to log your blood sugar reading.',
+        hour: 9,
+        minute: 0,
+      );
+      
+      //Schedule medication reminder
+      await _scheduleDailyNotification(
+        id: 1,
+        title: 'Medication Reminder',
+        body: 'Don\'t forget to take your medication',
+        hour: 9,
+        minute: 0,
+      );
     
-    //Schedule medication reminder
-    await _scheduleDailyNotification(
-      id: 1,
-      title: 'Medication Reminder',
-      body: 'Don\'t forget to take your medication',
-      hour: 9,
-      minute: 0,
-    );
-    
-    //Schedule evening check
-    await _scheduleDailyNotification(
-      id: 2,
-      title: 'Evening Glucose Check',
-      body: 'Time for your bedtime reading',
-      hour: 21,
-      minute: 0,
-    );
+      //Schedule evening check
+      await _scheduleDailyNotification(
+        id: 2,
+        title: 'Evening Glucose Check',
+        body: 'Time for your bedtime reading',
+        hour: 21,
+        minute: 0,
+      );
+    } catch (e) {
+      print('Failed to schedule notifications: $e');
+    }
   }
   
   static Future<void> _scheduleDailyNotification({
@@ -128,4 +139,20 @@ class NotificationService {
   static Future<void> cancelAllNotifications() async {
     await _notifications.cancelAll();
   }
+
+  static Future<bool> _checkNotificationPermissions() async {
+  try {
+    
+    final bool? result = await _notifications
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()!
+        .requestExactAlarmsPermission();
+    
+    //return false if null
+    return result ?? false;
+  } catch (e) {
+    print('Notification permission check failed: $e');
+    return false;
+  }
+}
 }
