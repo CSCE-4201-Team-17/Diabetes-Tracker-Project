@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
+load_dotenv()
 from groq import Groq
 import os
 from datetime import datetime
@@ -10,16 +11,20 @@ from flask import request, jsonify
 import boto3
 import uuid
 from werkzeug.utils import secure_filename
-load_dotenv()
+
 import time
 from flask import Flask, request, jsonify
+print("AWS KEY:", os.getenv("AWS_ACCESS_KEY_ID"))
+
+
+from database import save_glucose_reading, get_glucose_readings
+from database import save_meal
+from datetime import datetime
+import time 
 
 app = Flask(__name__)
 CORS(app)
 
-# In-memory storage for readings (no DB yet)
-# { "userId": [ { value, timestamp, type, notes }, ... ] }
-readings = {}
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 client = Groq(api_key=GROQ_API_KEY) 
@@ -36,14 +41,18 @@ s3 = boto3.client(
 )
 
 
-
 @app.post("/api/glucose")
 def add_glucose():
-    data = request.json
+    data = request.json or {}
     user_id = data.get("userId")
 
     if not user_id:
         return jsonify({"error": "Missing userId"}), 400
+
+    required_fields = ["value", "timestamp", "type"]
+    for f in required_fields:
+        if f not in data:
+            return jsonify({"error": f"Missing field: {f}"}), 400
 
     reading = {
         "value": data["value"],
@@ -52,12 +61,11 @@ def add_glucose():
         "notes": data.get("notes"),
     }
 
-    if user_id not in readings:
-        readings[user_id] = []
+    save_glucose_reading(user_id, reading)
 
-    readings[user_id].append(reading)
-    print(f"Added reading for {user_id}: {reading}")
+    print(f"[DynamoDB] Added reading for {user_id}: {reading}")
     return jsonify({"success": True}), 201
+
 
 
 
@@ -95,8 +103,9 @@ def upload_file():
 # Get user readings
 @app.get("/api/users/<user_id>/glucose")
 def get_user_glucose(user_id):
-    print(f"Get readings for {user_id}")
-    return jsonify(readings.get(user_id, [])), 200
+    items = get_glucose_readings(user_id)
+    return jsonify(items), 200
+
 
 def compute_future_predictions(readings):
     """
@@ -335,10 +344,18 @@ def upload_meal():
 
     image = request.files["image"]
 
-    # Make a unique file name for S3
-    filename = f"meal_{int(time.time())}.jpg"
+    # User passes userId for now (later Cognito will supply it automatically)
+    user_id = request.form.get("userId") or request.args.get("userId")
+
+    if not user_id:
+        return jsonify({"error": "Missing userId"}), 400
+
+    # Create unique S3 filename
+    timestamp = datetime.utcnow().isoformat()
+    filename = f"{user_id}_meal_{int(time.time())}.jpg"
 
     try:
+        # Upload to S3
         s3.upload_fileobj(
             image,
             S3_BUCKET,
@@ -346,11 +363,24 @@ def upload_meal():
             ExtraArgs={"ContentType": image.content_type}
         )
 
-        # Build the public image URL
-        s3.upload_fileobj(image, S3_BUCKET, filename)
+        # Public URL
         image_url = f"https://{S3_BUCKET}.s3.{AWS_REGION}.amazonaws.com/{filename}"
 
-        return jsonify({"image_url": image_url}), 200
+        # Save in DynamoDB
+        save_meal(
+            user_id=user_id,
+            timestamp=timestamp,
+            image_url=image_url,
+            extra_data={
+                "filename": filename,
+                "status": "uploaded"  # Lambda changes later to 'processed'
+            }
+        )
+
+        return jsonify({
+            "image_url": image_url,
+            "filename": filename
+        }), 200
 
     except Exception as e:
         print("S3 Upload Error:", e)
