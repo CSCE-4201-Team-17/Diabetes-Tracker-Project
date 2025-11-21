@@ -7,7 +7,7 @@ import 'medications_screen.dart';
 import 'history_screen.dart';
 import 'settings_screen.dart';
 import 'ai_assistant_screen.dart';
-
+import 'meal_upload_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -41,19 +41,18 @@ class _HomeScreenState extends State<HomeScreen> {
       medications: _medications,
       onAddBloodSugar: _showAddBloodSugarDialog,
       onNavigateToMedications: () => setState(() => _currentIndex = 3),
-      onNavigateToHistory: () => setState(() => _currentIndex = 1),
-      onNavigateToSettings: () => setState(() => _currentIndex = 4),
+      onNavigateToHistory: () => setState(() => _currentIndex = 4),
+      onNavigateToSettings: () => setState(() => _currentIndex = 5),
     );
   }
 
-  // AI Assistant Screen (center tab)
+  //AI Assistant Screen
   Widget _buildAiAssistant() {
-  return AiAssistantScreen(
-    bloodSugarReadings: _bloodSugarReadings,
-    medications: _medications,
-  );
-}
-
+    return AiAssistantScreen(
+      bloodSugarReadings: _bloodSugarReadings,
+      medications: _medications,
+    );
+  }
 
   //Medications Screen
   Widget _buildMedications() {
@@ -93,6 +92,11 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       },
     );
+  }
+
+  //Meal Upload Screen
+  Widget _buildMealUpload() {
+    return const MealUploadScreen();
   }
 
   //Dialog Methods
@@ -182,11 +186,12 @@ class _HomeScreenState extends State<HomeScreen> {
       body: IndexedStack(
         index: _currentIndex,
         children: [
-          _buildDashboard(),
-          _buildMedications(),
+          _buildDashboard(),  //adds the different tabs in the bottom of dashboard
           _buildAiAssistant(),
+          _buildMedications(),
           _buildHistory(),
           _buildSettings(),
+          _buildMealUpload(),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -195,10 +200,11 @@ class _HomeScreenState extends State<HomeScreen> {
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Dashboard'),
+          BottomNavigationBarItem(icon: Icon(Icons.smart_toy), label: 'AI Coach'),
           BottomNavigationBarItem(icon: Icon(Icons.medication), label: 'Medications'),
-          BottomNavigationBarItem(icon: Icon(Icons.smart_toy), label: 'AI Coach',),
           BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
           BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
+          BottomNavigationBarItem(icon: Icon(Icons.restaurant), label: 'Log Meal'), // ADD THIS
         ],
       ),
       floatingActionButton: _currentIndex == 0 ? FloatingActionButton(

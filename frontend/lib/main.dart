@@ -11,9 +11,13 @@ void main() async {
   await StorageService.init();
   await NotificationService.initialize();
   
-  //Schedule reminders if enabled
-  if (StorageService.enableReminders) {
-    await NotificationService.scheduleDailyReminders();
+  try {
+    if (StorageService.enableReminders) {
+      await NotificationService.scheduleDailyReminders();
+    }
+  } catch (e) {
+    print('Notification scheduling failed: $e');
+    //Continues with app startup even if notifications fail
   }
   
   runApp(const MyApp());
