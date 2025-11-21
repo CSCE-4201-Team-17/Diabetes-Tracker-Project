@@ -55,29 +55,35 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> register(String email, String password, String name) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/register'),
-        headers: await _getHeaders(),
-        body: json.encode({
-          'email': email,
-          'password': password,
-          'name': name,
-        }),
-      );
-      
-      if (response.statusCode == 201) {
-        final data = json.decode(response.body);
-        _authToken = data['token'];
-        return {'success': true, 'user': data['user']};
-      } else {
-        return {'success': false, 'error': 'Registration failed'};
-      }
-    } catch (e) {
-      return {'success': false, 'error': 'Network error: $e'};
+  static Future<Map<String, dynamic>> register(
+    String email, String password, String name) async {
+  try {
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/register'),
+      headers: await _getHeaders(),
+      body: json.encode({
+        'email': email,
+        'password': password,
+        'name': name,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      final data = json.decode(response.body);
+      return {'success': true, 'user': data['user']};
+    } else {
+      return {
+        'success': false,
+        'error': 'Registration failed: ${response.body}'
+      };
     }
+  } catch (e) {
+    return {'success': false, 'error': 'Network error: $e'};
   }
+}
+
+      
+      
   
   //Glucose Readings
   static Future<List<BloodSugarReading>> getGlucoseReadings(String userId) async {

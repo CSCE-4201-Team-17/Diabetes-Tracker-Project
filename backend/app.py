@@ -22,6 +22,9 @@ from database import save_meal
 from datetime import datetime
 import time 
 
+from database import create_user, get_user, verify_password
+
+
 app = Flask(__name__)
 CORS(app)
 
@@ -385,6 +388,59 @@ def upload_meal():
         print("S3 Upload Error:", e)
         return jsonify({"error": "S3 upload failed"}), 500
  
+
+@app.post("/api/auth/register")
+def register():
+    data = request.json or {}
+    email = data.get("email")
+    password = data.get("password")
+    name = data.get("name")  
+
+    if not email or not password or not name:
+        return jsonify({"error": "Missing required fields"}), 400
+
+    # Check if user already exists
+    existing = get_user(email)
+    if existing:
+        return jsonify({"error": "User already exists"}), 400
+
+    # Create user in DynamoDB
+    user_id = create_user(email, password, name)
+
+    return jsonify({
+        "success": True,
+        "user": {
+            "id": user_id,
+            "email": email,
+            "name": name
+        }
+    }), 201
+
+@app.post("/api/auth/login")
+def login():
+    data = request.json or {}
+    email = data.get("email")
+    password = data.get("password")
+
+    if not email or not password:
+        return jsonify({"error": "Missing email or password"}), 400
+
+    user = get_user(email)
+    if not user:
+        return jsonify({"error": "Invalid email or password"}), 401
+
+    if not verify_password(password, user["password_hash"]):
+        return jsonify({"error": "Invalid email or password"}), 401
+
+    return jsonify({
+        "success": True,
+        "user": {
+            "id": user["userId"],
+            "email": user["email"],
+            "name": user.get("name", "")    
+        }
+    }), 200
+
 
 
 
